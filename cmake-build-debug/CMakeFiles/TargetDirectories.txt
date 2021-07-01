@@ -1,0 +1,3 @@
+/Users/mats/CLionProjects/sokoban/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/mats/CLionProjects/sokoban/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/mats/CLionProjects/sokoban/cmake-build-debug/CMakeFiles/sokoban.dir
