@@ -68,11 +68,11 @@ public:
     Vector2i movement;
     Vector2i position;
     int direction;
-    IsoSprite *playerSprite;
+    shared_ptr<IsoSprite> playerSprite;
 
 
     Player(Texture *texture) {
-        this->playerSprite = new IsoSprite(texture, getPlayerRect(playerFrames[1]));
+        this->playerSprite = make_shared<IsoSprite>(IsoSprite(texture, getPlayerRect(playerFrames[1])));
     }
 
     void reset(Vector2i position) {
@@ -96,11 +96,12 @@ public:
         return position + movement;
     }
 
-    Movement *makeMove() {
+    shared_ptr<Movement> makeMove() {
         if (movement.x != 0 || movement.y != 0) {
             position += movement;
             auto dest = playerSprite->getScreenPosition(position);
-            return new Movement(playerSprite, dest, playerSprite->getPosition(), movementTime);
+            auto move = Movement(playerSprite, dest, playerSprite->getPosition(), movementTime);
+            return make_shared<Movement>(move);
         }
         return nullptr;
     }
@@ -111,15 +112,15 @@ class LevelPlayer {
     View *view;
     Texture *texture;
     LevelLoader loader;
-    std::vector<Movement *> moves;
-    Player *player;
+    vector<shared_ptr<Movement>> moves;
+    shared_ptr<Player> player;
     //vector<IsoSprite *> end;
-    vector<IsoSprite *> sprites;
+    vector<shared_ptr<IsoSprite>> sprites;
 public:
     LevelStatus status;
 
     LevelPlayer(View *view, Texture *texture) {
-        this->player = new Player(texture);
+        this->player = make_shared<Player>(Player(texture));
         this->view = view;
         this->texture = texture;
         this->loader = LevelLoader();
@@ -151,7 +152,7 @@ public:
         if (!moves.empty()) {
             bool hasAnimation = false;
 
-            for (Movement *m: moves) {
+            for (auto m: moves) {
                 if (m->elapsed < m->ms) {
                     m->elapsed += elapsed;
                     float p = min(m->elapsed / m->ms, 1.0f);
@@ -170,8 +171,9 @@ public:
         }
         return false;
     }
+
     bool same(Vector2i a, Vector2i b) {
-        return a.x==b.x && a.y==b.y;
+        return a.x == b.x && a.y == b.y;
     }
 
     void update(float elapsed) {
@@ -198,7 +200,8 @@ public:
                 if (canMove) {
                     *b.position += player->movement;
                     auto dest = b.sprite->getScreenPosition(*b.position);
-                    moves.push_back(new Movement(b.sprite, dest, b.sprite->getPosition(), movementTime));
+                    auto move = Movement(b.sprite, dest, b.sprite->getPosition(), movementTime);
+                    moves.push_back(make_shared<Movement>(move));
                 }
 
             } else if (!b.isFloor && collide) {
@@ -207,10 +210,10 @@ public:
         }
         if (status == LevelStatus::PLAYING) {
             bool hasAll = true;
-            for (Vector2i *p:level.end) {
+            for (Vector2i p:*level.end) {
                 bool hasThis = false;
                 for (Block b:level.blocks) {
-                    if (*b.position == *p && b.isBox) {
+                    if (*b.position == p && b.isBox) {
                         hasThis = true;
                         break;
                     }
@@ -233,7 +236,9 @@ public:
     }
 
     struct {
-        bool operator()(IsoSprite *a, IsoSprite *b) const { return (a->z+1) * (a->sort+1) < (b->z+1) * (b->sort+1); }
+        bool operator()(shared_ptr<IsoSprite> a, shared_ptr<IsoSprite> b) const {
+            return (a->z + 1) * (a->sort + 1) < (b->z + 1) * (b->sort + 1);
+        }
     } customLess;
 
     void draw(RenderWindow *window) {
@@ -241,7 +246,7 @@ public:
         if (status != LevelStatus::LOADING) {
             std::sort(sprites.begin(), sprites.end(), customLess);
 
-            for (Sprite *s:this->sprites) {
+            for (auto s:this->sprites) {
                 window->draw(*s);
             }
 

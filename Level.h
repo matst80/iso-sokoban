@@ -15,8 +15,6 @@ const int spriteHeight = 62;
 const float spriteFactor = 1.718;
 
 class IsoSprite : public sf::Sprite {
-
-
     sf::Vector2f WorldToScreen(sf::Vector2f v)
     {
         return sf::Vector2f(v.x - v.y*spriteFactor, (v.x/spriteFactor + v.y)-z);
@@ -37,17 +35,15 @@ public:
         this->sort = screenPosition.y;
         return screenPosition;
     }
-    sf::Vector2f setBlockPosition(int x, int y) {
-        auto screenPosition = WorldToScreen(sf::Vector2f(x*spriteWidth,y*spriteHeight));
-        setPosition(screenPosition);
-        this->sort = screenPosition.y;
-        return screenPosition;
-    }
+
     sf::Vector2f setBlockPosition(sf::Vector2i pos) {
         auto screenPosition = WorldToScreen(sf::Vector2f(pos.x*spriteWidth,pos.y*spriteHeight));
         setPosition(screenPosition);
         this->sort = screenPosition.y;
         return screenPosition;
+    }
+    sf::Vector2f setBlockPosition(std::shared_ptr<sf::Vector2i> pos) {
+        return setBlockPosition(*pos);
     }
     sf::Vector2f getScreenPosition(sf::Vector2i pos) {
         return WorldToScreen(sf::Vector2f(pos.x*spriteWidth,pos.y*spriteHeight));
@@ -59,20 +55,20 @@ public:
 
 
 struct Block {
-    IsoSprite *sprite;
+    std::shared_ptr<IsoSprite> sprite;
     int id;
-    sf::Vector2i *position;
+    std::shared_ptr<sf::Vector2i> position;
     bool isBox;
     bool isFloor;
 };
 
 struct Movement {
-    IsoSprite *sprite;
+    std::shared_ptr<IsoSprite> sprite;
     float elapsed;
     float ms;
     sf::Vector2f totalMovement;
     sf::Vector2f origin;
-    Movement(IsoSprite *sprite, sf::Vector2f dest, sf::Vector2f origin, int ms) {
+    Movement(std::shared_ptr<IsoSprite> sprite, sf::Vector2f dest, sf::Vector2f origin, int ms) {
         elapsed = 0;
         this->ms = ms;
         this->sprite = sprite;
@@ -85,8 +81,11 @@ struct Level {
     int width;
     int height;
     sf::Vector2i start;
-    std::vector<sf::Vector2i *> end;
+    std::shared_ptr<std::vector<sf::Vector2i>> end;
     std::vector<Block> blocks;
+    Level() {
+        end = std::make_shared<std::vector<sf::Vector2i>>();
+    }
 };
 
 

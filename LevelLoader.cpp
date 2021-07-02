@@ -11,11 +11,11 @@ IntRect getSpriteRect(int nr) {
     return IntRect((nr / 8) * blockWidth, (nr % 8) * blockHeight, blockWidth, blockHeight);
 }
 
-Block getBlock(Vector2i *pos, int type, bool isBox, bool isFloor, Texture *texture) {
+Block getBlock(shared_ptr<Vector2i> pos, int type, bool isBox, bool isFloor, Texture *texture) {
     Block blk;
     blk.isBox = isBox;
     blk.isFloor = isFloor;
-    blk.sprite = new IsoSprite(texture, getSpriteRect(type));
+    blk.sprite = make_shared<IsoSprite>(texture, getSpriteRect(type));
     if (!isFloor) {
         blk.sprite->setZ(spriteHeight * 2);
 
@@ -25,7 +25,7 @@ Block getBlock(Vector2i *pos, int type, bool isBox, bool isFloor, Texture *textu
         blk.sprite->setColor(Color(255, 255, 255, 64));
     }
     blk.id = pos->y * 100 + pos->x;
-    blk.sprite->setBlockPosition(*pos);
+    blk.sprite->setBlockPosition(pos);
     blk.position = pos;
 
     return blk;
@@ -36,7 +36,6 @@ Level LevelLoader::load(string filename, int nr, Texture *texture) {
     string line;
     fs.open(filename);
     Level level;
-
 
     int c = 0;
     int x = 0;
@@ -54,12 +53,12 @@ Level LevelLoader::load(string filename, int nr, Texture *texture) {
             }
             if (c == nr) {
                 for (char chr:line) {
-                    auto p = new Vector2i(x, y);
+                    auto p = make_shared<Vector2i>(Vector2i (x, y));
                     if (chr == '@' || chr == '+') {
                         level.start = Vector2i(x, y);
                     }
                     if (chr == '.' || chr == '+' || chr == '*') {
-                        level.end.push_back(p);
+                        level.end->push_back(*p);
                         level.blocks.push_back(getBlock(p, 90, false, false, texture));
                     }
                     if (chr == '$' || chr == '*') {
